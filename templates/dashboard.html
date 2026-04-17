@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chores</title>
+</head>
+<body>
+    <h1>Chore List</h1>
+
+    {% for chore in chores %}
+        <div>
+            <h3>{{ chore.title }}</h3>
+            <p>{{ chore.description }}</p>
+            <p>Status: {{ chore.status }}</p>
+        </div>
+    {% endfor %}
+</body>
+</html>
