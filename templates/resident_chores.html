@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Resident Chores{% endblock %}
+
+{% block content %}
+    <h2>
+        {% if resident %}
+            {{ resident.name }}'s Chores
+        {% else %}
+            Resident Chores
+        {% endif %}
+    </h2>
+    <p><a href="{{ url_for('chores') }}">Back to RA Dashboard</a></p>
+
+    {% if chores %}
+        <section class="chore-list">
+            {% for chore in chores %}
+                <article class="chore-card">
+                    <h3>{{ chore.title }}</h3>
+                    <p>{{ chore.description or 'No description provided.' }}</p>
+                    <p><strong>Due:</strong> {{ chore.due_date or 'No due date' }}</p>
+                    <p>
+                        <strong>Status:</strong>
+                        <span class="badge badge-{{ chore.status|lower }}">{{ chore.status }}</span>
+                    </p>
+                    {% if chore.status != "Completed" %}
+                        <form method="post" action="{{ url_for('complete_chore', chore_id=chore.id) }}">
+                            <button type="submit">Mark Complete</button>
+                        </form>
+                    {% endif %}
+                </article>
+            {% endfor %}
+        </section>
+    {% else %}
+        <p>No chores assigned right now.</p>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Chore{% endblock %}
+
+{% block content %}
+    <h2>Edit Chore</h2>
+    <form method="post" class="chore-form">
+        <label for="title">Title</label>
+        <input type="text" id="title" name="title" value="{{ chore.title }}" required>
+
+        <label for="description">Description</label>
+        <textarea id="description" name="description" rows="4">{{ chore.description }}</textarea>
+
+        <label for="due_date">Due Date</label>
+        <input type="date" id="due_date" name="due_date" value="{{ chore.due_date }}">
+
+        <label for="resident_id">Assign to Resident</label>
+        <select id="resident_id" name="resident_id">
+            <option value="">Unassigned</option>
+            {% for resident in residents %}
+                <option value="{{ resident.id }}" {% if chore.resident_id == resident.id %}selected{% endif %}>
+                    {{ resident.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">Update Chore</button>
+    </form>
+{% endblock %}

@@ -1,17 +1,49 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Chores</title>
-</head>
-<body>
-    <h1>Chore List</h1>
+{% extends "base.html" %}
 
-    {% for chore in chores %}
-        <div>
-            <h3>{{ chore.title }}</h3>
-            <p>{{ chore.description }}</p>
-            <p>Status: {{ chore.status }}</p>
-        </div>
-    {% endfor %}
-</body>
-</html>
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+    <section class="summary-bar">
+        <h2>RA Dashboard</h2>
+        <p>Overdue chores: <strong>{{ overdue_count }}</strong></p>
+    </section>
+
+    <section class="role-switch">
+        <h3>Resident View</h3>
+        {% for resident in residents %}
+            <a class="chip" href="{{ url_for('resident_chores', resident_id=resident.id) }}">
+                {{ resident.name }}
+            </a>
+        {% endfor %}
+    </section>
+
+    {% if chores %}
+        <section class="chore-list">
+            {% for chore in chores %}
+                <article class="chore-card">
+                    <h3>{{ chore.title }}</h3>
+                    <p>{{ chore.description or 'No description provided.' }}</p>
+                    <p><strong>Assigned to:</strong> {{ chore.resident_name or 'Unassigned' }}</p>
+                    <p><strong>Due:</strong> {{ chore.due_date or 'No due date' }}</p>
+                    <p>
+                        <strong>Status:</strong>
+                        <span class="badge badge-{{ chore.status|lower }}">{{ chore.status }}</span>
+                    </p>
+                    <div class="actions">
+                        <a href="{{ url_for('edit_chore', chore_id=chore.id) }}">Edit</a>
+                        <form method="post" action="{{ url_for('complete_chore', chore_id=chore.id) }}">
+                            <button type="submit" {% if chore.status == 'Completed' %}disabled{% endif %}>
+                                Complete
+                            </button>
+                        </form>
+                        <form method="post" action="{{ url_for('delete_chore', chore_id=chore.id) }}">
+                            <button type="submit" class="danger">Delete</button>
+                        </form>
+                    </div>
+                </article>
+            {% endfor %}
+        </section>
+    {% else %}
+        <p>No chores yet. Add your first chore.</p>
+    {% endif %}
+{% endblock %}
