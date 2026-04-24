@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Create Task | DormTasker{% endblock %}
+{% block page_title %}Create Task{% endblock %}
+
+{% block content %}
+    <section class="card-panel form-panel">
+        <div class="panel-head">
+            <h3>New Dorm Task</h3>
+            <p>Create and assign a task for residents.</p>
+        </div>
+
+        <form method="post" class="task-form">
+            <div class="field">
+                <label for="title">Task Title</label>
+                <input type="text" id="title" name="title" placeholder="Example: Clean Kitchen" required>
+            </div>
+
+            <div class="field">
+                <label for="description">Details</label>
+                <textarea id="description" name="description" rows="4" placeholder="Add task instructions"></textarea>
+            </div>
+
+            <div class="field-row">
+                <div class="field">
+                    <label for="due_date">Due Date</label>
+                    <input type="date" id="due_date" name="due_date">
+                </div>
+
+                <div class="field">
+                    <label for="resident_id">Assign Resident</label>
+                    <select id="resident_id" name="resident_id">
+                        <option value="">Unassigned</option>
+                        {% for resident in residents %}
+                            <option value="{{ resident.id }}">{{ resident.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a href="{{ url_for('chores') }}" class="btn btn-soft">Cancel</a>
+                <button type="submit" class="btn btn-primary">Save Task</button>
+            </div>
+        </form>
+    </section>
+{% endblock %}

@@ -1,49 +1,91 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard{% endblock %}
+{% block title %}DormTasker Dashboard{% endblock %}
+{% block page_title %}Task Dashboard{% endblock %}
 
 {% block content %}
-    <section class="summary-bar">
-        <h2>RA Dashboard</h2>
-        <p>Overdue chores: <strong>{{ overdue_count }}</strong></p>
+    <section class="dashboard-grid">
+        <article class="stat-card">
+            <p class="stat-label">Total Tasks</p>
+            <h3>{{ chores|length }}</h3>
+        </article>
+        <article class="stat-card">
+            <p class="stat-label">Overdue</p>
+            <h3>{{ overdue_count }}</h3>
+        </article>
+        <article class="stat-card">
+            <p class="stat-label">Completed</p>
+            <h3>{{ chores|selectattr("status", "equalto", "Completed")|list|length }}</h3>
+        </article>
     </section>
 
-    <section class="role-switch">
-        <h3>Resident View</h3>
-        {% for resident in residents %}
-            <a class="chip" href="{{ url_for('resident_chores', resident_id=resident.id) }}">
-                {{ resident.name }}
-            </a>
-        {% endfor %}
+    <section class="card-panel" id="residents">
+        <div class="panel-head">
+            <h3>Residents View</h3>
+            <p>Switch to a resident timeline.</p>
+        </div>
+        <div class="chip-row">
+            {% for resident in residents %}
+                <a class="chip" href="{{ url_for('resident_chores', resident_id=resident.id) }}">{{ resident.name }}</a>
+            {% endfor %}
+        </div>
     </section>
 
-    {% if chores %}
-        <section class="chore-list">
-            {% for chore in chores %}
-                <article class="chore-card">
-                    <h3>{{ chore.title }}</h3>
-                    <p>{{ chore.description or 'No description provided.' }}</p>
-                    <p><strong>Assigned to:</strong> {{ chore.resident_name or 'Unassigned' }}</p>
-                    <p><strong>Due:</strong> {{ chore.due_date or 'No due date' }}</p>
-                    <p>
-                        <strong>Status:</strong>
-                        <span class="badge badge-{{ chore.status|lower }}">{{ chore.status }}</span>
-                    </p>
-                    <div class="actions">
-                        <a href="{{ url_for('edit_chore', chore_id=chore.id) }}">Edit</a>
-                        <form method="post" action="{{ url_for('complete_chore', chore_id=chore.id) }}">
-                            <button type="submit" {% if chore.status == 'Completed' %}disabled{% endif %}>
-                                Complete
-                            </button>
-                        </form>
-                        <form method="post" action="{{ url_for('delete_chore', chore_id=chore.id) }}">
-                            <button type="submit" class="danger">Delete</button>
-                        </form>
+    <section class="card-panel" id="assigned">
+        <div class="panel-head">
+            <h3>Assigned Tasks</h3>
+            <p>Active work for dorm residents.</p>
+        </div>
+        {% if chores %}
+            <div class="task-list">
+                {% for chore in chores if chore.status != "Completed" %}
+                    <article class="task-item">
+                        <div class="task-main">
+                            <h4>{{ chore.title }}</h4>
+                            <p>{{ chore.description or "No details provided." }}</p>
+                            <div class="meta-row">
+                                <span>Assigned: {{ chore.resident_name or "Unassigned" }}</span>
+                                <span>Due: {{ chore.due_date or "No due date" }}</span>
+                                <span class="badge badge-{{ chore.status|lower }}">{{ chore.status }}</span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <a class="btn btn-soft" href="{{ url_for('edit_chore', chore_id=chore.id) }}">Edit</a>
+                            <form method="post" action="{{ url_for('complete_chore', chore_id=chore.id) }}">
+                                <button class="btn btn-primary" type="submit">Complete</button>
+                            </form>
+                            <form method="post" action="{{ url_for('delete_chore', chore_id=chore.id) }}">
+                                <button class="btn btn-danger" type="submit">Delete</button>
+                            </form>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-state">No tasks yet. Create your first task to get started.</p>
+        {% endif %}
+    </section>
+
+    <section class="card-panel" id="completed">
+        <div class="panel-head">
+            <h3>Completed Tasks</h3>
+            <p>Finished chores and task history.</p>
+        </div>
+        <div class="task-list">
+            {% for chore in chores if chore.status == "Completed" %}
+                <article class="task-item task-item-complete">
+                    <div class="task-main">
+                        <h4>{{ chore.title }}</h4>
+                        <div class="meta-row">
+                            <span>Assigned: {{ chore.resident_name or "Unassigned" }}</span>
+                            <span>Done</span>
+                            <span class="badge badge-completed">Completed</span>
+                        </div>
                     </div>
                 </article>
+            {% else %}
+                <p class="empty-state">No completed tasks yet.</p>
             {% endfor %}
-        </section>
-    {% else %}
-        <p>No chores yet. Add your first chore.</p>
-    {% endif %}
+        </div>
+    </section>
 {% endblock %}

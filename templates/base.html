@@ -1,29 +1,56 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>{% block title %}Dorm Chore Manager{% endblock %}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}DormTasker{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <header>
-        <h1><a href="{{ url_for('chores') }}">Dorm Chore Manager</a></h1>
-        <nav>
-            <a href="{{ url_for('chores') }}">Dashboard</a>
-            <a href="{{ url_for('create_chore') }}">Create Chore</a>
-        </nav>
-    </header>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="brand">
+                <span class="brand-badge">DT</span>
+                <div>
+                    <h1>DormTasker</h1>
+                    <p>Dorm Ops Workspace</p>
+                </div>
+            </div>
 
-    <main>
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <section>
-                    {% for category, message in messages %}
-                        <p class="flash flash-{{ category }}">{{ message }}</p>
-                    {% endfor %}
-                </section>
-            {% endif %}
-        {% endwith %}
-        {% block content %}{% endblock %}
-    </main>
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('chores') }}" class="nav-link">Dashboard</a>
+                <a href="{{ url_for('create_chore') }}" class="nav-link">Create Task</a>
+                <a href="{{ url_for('chores') }}#assigned" class="nav-link">Assigned Tasks</a>
+                <a href="{{ url_for('chores') }}#completed" class="nav-link">Completed Tasks</a>
+                <a href="{{ url_for('chores') }}#residents" class="nav-link">Residents View</a>
+            </nav>
+        </aside>
+
+        <div class="main-panel">
+            <header class="topbar">
+                <div>
+                    <p class="topbar-eyebrow">Home</p>
+                    <h2 class="topbar-title">{% block page_title %}Dashboard{% endblock %}</h2>
+                </div>
+                <a class="btn btn-primary" href="{{ url_for('create_chore') }}">+ New Task</a>
+            </header>
+
+            <main class="content">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <section class="flash-stack">
+                            {% for category, message in messages %}
+                                <p class="flash flash-{{ category }}">{{ message }}</p>
+                            {% endfor %}
+                        </section>
+                    {% endif %}
+                {% endwith %}
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
 </body>
 </html>
