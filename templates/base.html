@@ -21,11 +21,22 @@
             </div>
 
             <nav class="sidebar-nav">
-                <a href="{{ url_for('chores') }}" class="nav-link">Dashboard</a>
-                <a href="{{ url_for('create_chore') }}" class="nav-link">Create Task</a>
-                <a href="{{ url_for('chores') }}#assigned" class="nav-link">Assigned Tasks</a>
-                <a href="{{ url_for('chores') }}#completed" class="nav-link">Completed Tasks</a>
-                <a href="{{ url_for('chores') }}#residents" class="nav-link">Residents View</a>
+                {% if current_user %}
+                    <a href="{{ url_for('chores') }}" class="nav-link">Dashboard</a>
+                    {% if current_user.role == "RA" %}
+                        <a href="{{ url_for('create_chore') }}" class="nav-link">Create Task</a>
+                        <a href="{{ url_for('chores') }}#assigned" class="nav-link">Assigned Tasks</a>
+                        <a href="{{ url_for('chores') }}#completed" class="nav-link">Completed Tasks</a>
+                        <a href="{{ url_for('chores') }}#residents" class="nav-link">Residents View</a>
+                    {% else %}
+                        <a href="{{ url_for('chores') }}#assigned" class="nav-link">My Tasks</a>
+                        <a href="{{ url_for('chores') }}#completed" class="nav-link">Completed</a>
+                    {% endif %}
+                    <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="nav-link">Login</a>
+                    <a href="{{ url_for('register') }}" class="nav-link">Register</a>
+                {% endif %}
             </nav>
         </aside>
 
@@ -34,8 +45,17 @@
                 <div>
                     <p class="topbar-eyebrow">Home</p>
                     <h2 class="topbar-title">{% block page_title %}Dashboard{% endblock %}</h2>
+                    {% if current_user %}
+                        <p class="user-context">
+                            {{ current_user.name }} ({{ current_user.role }}) - {{ current_user.room_name or "No Room" }}
+                        </p>
+                    {% endif %}
                 </div>
-                <a class="btn btn-primary" href="{{ url_for('create_chore') }}">+ New Task</a>
+                {% if current_user and current_user.role == "RA" %}
+                    <a class="btn btn-primary" href="{{ url_for('create_chore') }}">+ New Task</a>
+                {% elif not current_user %}
+                    <a class="btn btn-primary" href="{{ url_for('register') }}">Join Dorm Room</a>
+                {% endif %}
             </header>
 
             <main class="content">

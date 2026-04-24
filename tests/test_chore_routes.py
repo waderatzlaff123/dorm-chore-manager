@@ -63,7 +63,8 @@ def test_delete_chore_removes_from_database(isolated_db):
 
 def test_resident_route_loads(test_client):
     response = test_client.get("/resident/2/chores")
-    assert response.status_code == 200
+    assert response.status_code == 302
+    assert "/login" in response.headers["Location"]
 
 
 def test_overdue_generator_returns_old_chores(isolated_db):

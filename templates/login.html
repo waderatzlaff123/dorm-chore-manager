@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Login | DormTasker{% endblock %}
+{% block page_title %}Welcome Back{% endblock %}
+
+{% block content %}
+    <section class="auth-wrap">
+        <article class="auth-card">
+            <div class="panel-head">
+                <h3>DormTasker Login</h3>
+                <p>Sign in to manage your dorm room tasks.</p>
+            </div>
+            <form method="post" class="task-form">
+                <div class="field">
+                    <label for="email">Email or Username</label>
+                    <input type="text" id="email" name="email" required placeholder="you@school.edu">
+                </div>
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button class="btn btn-primary" type="submit">Log In</button>
+            </form>
+            <p class="auth-note">
+                Need an account?
+                <a href="{{ url_for('register') }}">Join your room</a>
+            </p>
+        </article>
+    </section>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Register | DormTasker{% endblock %}
+{% block page_title %}Join a Dorm Room{% endblock %}
+
+{% block content %}
+    <section class="auth-wrap">
+        <article class="auth-card auth-card-wide">
+            <div class="panel-head">
+                <h3>Create Your DormTasker Account</h3>
+                <p>Join your RA/resident room with a room code.</p>
+            </div>
+            <form method="post" class="task-form">
+                <div class="field-row">
+                    <div class="field">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <div class="field">
+                        <label for="email">Email or Username</label>
+                        <input type="text" id="email" name="email" required>
+                    </div>
+                </div>
+
+                <div class="field-row">
+                    <div class="field">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <div class="field">
+                        <label for="role">Role</label>
+                        <select id="role" name="role" required>
+                            <option value="">Select role</option>
+                            <option value="RA">RA</option>
+                            <option value="Resident">Resident</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="room_code">Room Code</label>
+                    <input type="text" id="room_code" name="room_code" required placeholder="Example: OAK-214">
+                </div>
+
+                <button class="btn btn-primary" type="submit">Create Account</button>
+            </form>
+            <p class="auth-note">
+                Already have an account?
+                <a href="{{ url_for('login') }}">Log in</a>
+            </p>
+        </article>
+    </section>
+{% endblock %}

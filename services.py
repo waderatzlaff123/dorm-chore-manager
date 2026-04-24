@@ -40,26 +40,51 @@ class ChoreService:
             status=row["status"],
         )
 
-    def get_residents(self) -> List[Dict]:
+    def get_residents(self, room_id: Optional[int] = None) -> List[Dict]:
         conn = get_db_connection()
-        rows = conn.execute(
-            "SELECT id, name, role FROM users WHERE role = 'Resident' ORDER BY name"
-        ).fetchall()
+        if room_id:
+            rows = conn.execute(
+                """
+                SELECT id, name, role, room_id
+                FROM users
+                WHERE role = 'Resident' AND room_id = ?
+                ORDER BY name
+                """,
+                (room_id,),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT id, name, role, room_id FROM users WHERE role = 'Resident' ORDER BY name"
+            ).fetchall()
         conn.close()
         return [dict(row) for row in rows]
 
-    def get_chores(self) -> List[Dict]:
+    def get_chores(self, room_id: Optional[int] = None) -> List[Dict]:
         conn = get_db_connection()
-        rows = conn.execute(
-            """
-            SELECT c.id, c.title, c.description, c.due_date, c.status,
-                   u.name AS resident_name, a.resident_id
-            FROM chores c
-            LEFT JOIN assignments a ON c.id = a.chore_id
-            LEFT JOIN users u ON a.resident_id = u.id
-            ORDER BY c.id DESC
-            """
-        ).fetchall()
+        if room_id:
+            rows = conn.execute(
+                """
+                SELECT c.id, c.title, c.description, c.due_date, c.status, c.room_id,
+                       u.name AS resident_name, a.resident_id
+                FROM chores c
+                LEFT JOIN assignments a ON c.id = a.chore_id
+                LEFT JOIN users u ON a.resident_id = u.id
+                WHERE c.room_id = ?
+                ORDER BY c.id DESC
+                """,
+                (room_id,),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                """
+                SELECT c.id, c.title, c.description, c.due_date, c.status, c.room_id,
+                       u.name AS resident_name, a.resident_id
+                FROM chores c
+                LEFT JOIN assignments a ON c.id = a.chore_id
+                LEFT JOIN users u ON a.resident_id = u.id
+                ORDER BY c.id DESC
+                """
+            ).fetchall()
         conn.close()
 
         chores = []
@@ -75,21 +100,33 @@ class ChoreService:
                     "status": status,
                     "resident_name": row["resident_name"],
                     "resident_id": row["resident_id"],
+                    "room_id": row["room_id"],
                 }
             )
         return chores
 
-    def get_chore(self, chore_id: int) -> Dict:
+    def get_chore(self, chore_id: int, room_id: Optional[int] = None) -> Dict:
         conn = get_db_connection()
-        row = conn.execute(
-            """
-            SELECT c.id, c.title, c.description, c.due_date, c.status, a.resident_id
-            FROM chores c
-            LEFT JOIN assignments a ON c.id = a.chore_id
-            WHERE c.id = ?
-            """,
-            (chore_id,),
-        ).fetchone()
+        if room_id:
+            row = conn.execute(
+                """
+                SELECT c.id, c.title, c.description, c.due_date, c.status, c.room_id, a.resident_id
+                FROM chores c
+                LEFT JOIN assignments a ON c.id = a.chore_id
+                WHERE c.id = ? AND c.room_id = ?
+                """,
+                (chore_id, room_id),
+            ).fetchone()
+        else:
+            row = conn.execute(
+                """
+                SELECT c.id, c.title, c.description, c.due_date, c.status, c.room_id, a.resident_id
+                FROM chores c
+                LEFT JOIN assignments a ON c.id = a.chore_id
+                WHERE c.id = ?
+                """,
+                (chore_id,),
+            ).fetchone()
         conn.close()
         if not row:
             raise ChoreNotFoundError(f"Chore with id {chore_id} was not found.")
@@ -100,6 +137,7 @@ class ChoreService:
             "due_date": row["due_date"] or "",
             "status": row["status"],
             "resident_id": row["resident_id"],
+            "room_id": row["room_id"],
         }
 
     @validate_chore_title
@@ -110,18 +148,25 @@ class ChoreService:
         due_date: str,
         resident_id: Optional[int],
         assigned_by: int,
+        room_id: int = 1,
     ) -> int:
         clean_due_date = self._validate_due_date(due_date)
         conn = get_db_connection()
         cursor = conn.execute(
-            "INSERT INTO chores (title, description, due_date, status) VALUES (?, ?, ?, ?)",
-            (title.strip(), description.strip(), clean_due_date, "Pending"),
+            """
+            INSERT INTO chores (title, description, due_date, status, room_id, created_by)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (title.strip(), description.strip(), clean_due_date, "Pending", room_id, assigned_by),
         )
         chore_id = cursor.lastrowid
         if resident_id:
             conn.execute(
-                "INSERT INTO assignments (chore_id, resident_id, assigned_by) VALUES (?, ?, ?)",
-                (chore_id, resident_id, assigned_by),
+                """
+                INSERT INTO assignments (chore_id, resident_id, assigned_by, room_id)
+                VALUES (?, ?, ?, ?)
+                """,
+                (chore_id, resident_id, assigned_by, room_id),
             )
         conn.commit()
         conn.close()
@@ -129,52 +174,81 @@ class ChoreService:
 
     @validate_chore_title
     def update_chore(
-        self, chore_id: int, title: str, description: str, due_date: str, resident_id: int
+        self,
+        chore_id: int,
+        title: str,
+        description: str,
+        due_date: str,
+        resident_id: int,
+        room_id: int = 1,
+        assigned_by: int = 1,
     ) -> None:
         clean_due_date = self._validate_due_date(due_date)
-        self.get_chore(chore_id)
+        self.get_chore(chore_id, room_id=room_id)
         conn = get_db_connection()
         conn.execute(
-            "UPDATE chores SET title = ?, description = ?, due_date = ? WHERE id = ?",
-            (title.strip(), description.strip(), clean_due_date, chore_id),
+            """
+            UPDATE chores
+            SET title = ?, description = ?, due_date = ?
+            WHERE id = ? AND room_id = ?
+            """,
+            (title.strip(), description.strip(), clean_due_date, chore_id, room_id),
         )
 
         conn.execute("DELETE FROM assignments WHERE chore_id = ?", (chore_id,))
         if resident_id:
             conn.execute(
-                "INSERT INTO assignments (chore_id, resident_id, assigned_by) VALUES (?, ?, ?)",
-                (chore_id, resident_id, 1),
+                """
+                INSERT INTO assignments (chore_id, resident_id, assigned_by, room_id)
+                VALUES (?, ?, ?, ?)
+                """,
+                (chore_id, resident_id, assigned_by, room_id),
             )
         conn.commit()
         conn.close()
 
-    def delete_chore(self, chore_id: int) -> None:
-        self.get_chore(chore_id)
+    def delete_chore(self, chore_id: int, room_id: int = 1) -> None:
+        self.get_chore(chore_id, room_id=room_id)
         conn = get_db_connection()
         conn.execute("DELETE FROM assignments WHERE chore_id = ?", (chore_id,))
-        conn.execute("DELETE FROM chores WHERE id = ?", (chore_id,))
+        conn.execute("DELETE FROM chores WHERE id = ? AND room_id = ?", (chore_id, room_id))
         conn.commit()
         conn.close()
 
-    def mark_complete(self, chore_id: int) -> None:
-        self.get_chore(chore_id)
+    def mark_complete(self, chore_id: int, room_id: int = 1) -> None:
+        self.get_chore(chore_id, room_id=room_id)
         conn = get_db_connection()
-        conn.execute("UPDATE chores SET status = 'Completed' WHERE id = ?", (chore_id,))
+        conn.execute(
+            "UPDATE chores SET status = 'Completed' WHERE id = ? AND room_id = ?",
+            (chore_id, room_id),
+        )
         conn.commit()
         conn.close()
 
-    def get_resident_chores(self, resident_id: int) -> List[Dict]:
+    def get_resident_chores(self, resident_id: int, room_id: Optional[int] = None) -> List[Dict]:
         conn = get_db_connection()
-        rows = conn.execute(
-            """
-            SELECT c.id, c.title, c.description, c.due_date, c.status
-            FROM chores c
-            JOIN assignments a ON c.id = a.chore_id
-            WHERE a.resident_id = ?
-            ORDER BY c.id DESC
-            """,
-            (resident_id,),
-        ).fetchall()
+        if room_id:
+            rows = conn.execute(
+                """
+                SELECT c.id, c.title, c.description, c.due_date, c.status
+                FROM chores c
+                JOIN assignments a ON c.id = a.chore_id
+                WHERE a.resident_id = ? AND c.room_id = ?
+                ORDER BY c.id DESC
+                """,
+                (resident_id, room_id),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                """
+                SELECT c.id, c.title, c.description, c.due_date, c.status
+                FROM chores c
+                JOIN assignments a ON c.id = a.chore_id
+                WHERE a.resident_id = ?
+                ORDER BY c.id DESC
+                """,
+                (resident_id,),
+            ).fetchall()
         conn.close()
         chores = []
         for row in rows:

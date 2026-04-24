@@ -19,22 +19,24 @@
         </article>
     </section>
 
-    <section class="card-panel" id="residents">
-        <div class="panel-head">
-            <h3>Residents View</h3>
-            <p>Switch to a resident timeline.</p>
-        </div>
-        <div class="chip-row">
-            {% for resident in residents %}
-                <a class="chip" href="{{ url_for('resident_chores', resident_id=resident.id) }}">{{ resident.name }}</a>
-            {% endfor %}
-        </div>
-    </section>
+    {% if user_role == "RA" %}
+        <section class="card-panel" id="residents">
+            <div class="panel-head">
+                <h3>Residents View</h3>
+                <p>Switch to a resident timeline.</p>
+            </div>
+            <div class="chip-row">
+                {% for resident in residents %}
+                    <a class="chip" href="{{ url_for('resident_chores', resident_id=resident.id) }}">{{ resident.name }}</a>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
 
     <section class="card-panel" id="assigned">
         <div class="panel-head">
-            <h3>Assigned Tasks</h3>
-            <p>Active work for dorm residents.</p>
+            <h3>{% if user_role == "RA" %}Assigned Tasks{% else %}My Assigned Tasks{% endif %}</h3>
+            <p>{% if user_role == "RA" %}Active work for dorm residents.{% else %}Your active chores in this room.{% endif %}</p>
         </div>
         {% if chores %}
             <div class="task-list">
@@ -50,13 +52,17 @@
                             </div>
                         </div>
                         <div class="task-actions">
-                            <a class="btn btn-soft" href="{{ url_for('edit_chore', chore_id=chore.id) }}">Edit</a>
+                            {% if user_role == "RA" %}
+                                <a class="btn btn-soft" href="{{ url_for('edit_chore', chore_id=chore.id) }}">Edit</a>
+                            {% endif %}
                             <form method="post" action="{{ url_for('complete_chore', chore_id=chore.id) }}">
                                 <button class="btn btn-primary" type="submit">Complete</button>
                             </form>
-                            <form method="post" action="{{ url_for('delete_chore', chore_id=chore.id) }}">
-                                <button class="btn btn-danger" type="submit">Delete</button>
-                            </form>
+                            {% if user_role == "RA" %}
+                                <form method="post" action="{{ url_for('delete_chore', chore_id=chore.id) }}">
+                                    <button class="btn btn-danger" type="submit">Delete</button>
+                                </form>
+                            {% endif %}
                         </div>
                     </article>
                 {% endfor %}

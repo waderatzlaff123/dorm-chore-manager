@@ -111,6 +111,12 @@ a {
     font-size: 1.75rem;
 }
 
+.user-context {
+    margin: 0.45rem 0 0;
+    color: var(--muted);
+    font-size: 0.88rem;
+}
+
 .content {
     max-width: 1050px;
 }
@@ -351,6 +357,34 @@ select:focus {
 .empty-state {
     color: var(--muted);
     margin: 0;
+}
+
+.auth-wrap {
+    min-height: calc(100vh - 220px);
+    display: grid;
+    place-items: center;
+}
+
+.auth-card {
+    width: min(460px, 100%);
+    background: linear-gradient(180deg, var(--panel-alt) 0%, var(--panel) 100%);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 1.2rem;
+}
+
+.auth-card-wide {
+    width: min(640px, 100%);
+}
+
+.auth-note {
+    color: var(--muted);
+    margin: 0.8rem 0 0;
+    font-size: 0.9rem;
+}
+
+.auth-note a {
+    color: #9af7da;
 }
 
 @media (max-width: 980px) {
