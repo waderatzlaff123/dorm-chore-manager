@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Settings | DormTasker{% endblock %}
+{% block page_title %}Settings{% endblock %}
+
+{% block content %}
+    <section class="card-panel settings-grid">
+        <div class="panel-head">
+            <h3>Room Settings</h3>
+            <p>View room information and update the room name.</p>
+        </div>
+
+        <div class="room-card">
+            <p class="stat-label">Room Name</p>
+            <h3>{{ room.room_name }}</h3>
+            <p class="stat-label">Room Code</p>
+            <div class="code-card">
+                <span>{{ room.room_code }}</span>
+                {% if user_role == 'RA' %}
+                    <button type="button" class="btn btn-soft btn-small" onclick="navigator.clipboard.writeText('{{ room.room_code }}')">Copy</button>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if user_role == 'RA' %}
+            <form method="post" class="task-form settings-form">
+                <div class="field">
+                    <label for="room_name">Chore Room Name</label>
+                    <input type="text" id="room_name" name="room_name" value="{{ room.room_name }}" required>
+                </div>
+                <button class="btn btn-primary" type="submit">Save Room Name</button>
+            </form>
+        {% else %}
+            <section class="card-panel">
+                <div class="panel-head">
+                    <h3>Room Name</h3>
+                    <p>Ask your Resident's Assistant to update the room name.</p>
+                </div>
+                <p>{{ room.room_name }}</p>
+            </section>
+        {% endif %}
+    </section>
+{% endblock %}

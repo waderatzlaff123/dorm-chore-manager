@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Calendar | DormTasker{% endblock %}
+{% block page_title %}Calendar{% endblock %}
+
+{% block content %}
+    <section class="card-panel">
+        <div class="panel-head">
+            <h3>Chore Calendar</h3>
+            <p>See due dates for the current month on the room calendar.</p>
+        </div>
+        {% set scheduled = chores | selectattr('due_date') | list | sort(attribute='due_date') %}
+        {% if scheduled %}
+            <div class="task-list">
+                {% for chore in scheduled %}
+                    <article class="task-item task-item-complete">
+                        <div class="task-main">
+                            <h4>{{ chore.title }}</h4>
+                            <p>{{ chore.description or 'No additional details.' }}</p>
+                            <div class="meta-row">
+                                <span>Due: {{ chore.due_date }}</span>
+                                <span>Status: {{ chore.status }}</span>
+                            </div>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-state">No calendar items found for this room.</p>
+        {% endif %}
+    </section>
+{% endblock %}

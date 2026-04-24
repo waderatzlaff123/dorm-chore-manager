@@ -59,6 +59,28 @@ class ChoreService:
         conn.close()
         return [dict(row) for row in rows]
 
+    def get_room(self, room_id: int) -> Dict:
+        conn = get_db_connection()
+        row = conn.execute(
+            "SELECT id, room_name, room_code FROM rooms WHERE id = ?",
+            (room_id,),
+        ).fetchone()
+        conn.close()
+        if not row:
+            raise ValueError(f"Room with id {room_id} was not found.")
+        return dict(row)
+
+    def update_room_name(self, room_id: int, room_name: str) -> None:
+        if not room_name or not room_name.strip():
+            raise ValueError("Room name cannot be blank.")
+        conn = get_db_connection()
+        conn.execute(
+            "UPDATE rooms SET room_name = ? WHERE id = ?",
+            (room_name.strip(), room_id),
+        )
+        conn.commit()
+        conn.close()
+
     def get_chores(self, room_id: Optional[int] = None) -> List[Dict]:
         conn = get_db_connection()
         if room_id:

@@ -83,6 +83,80 @@ a {
     font-weight: 500;
 }
 
+.nav-link.active {
+    color: var(--text);
+    background: rgba(51, 214, 159, 0.16);
+}
+
+.sidebar-card {
+    margin-top: 1.25rem;
+    background: linear-gradient(180deg, var(--panel-alt) 0%, var(--panel) 100%);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 1rem;
+}
+
+.sidebar-calendar {
+    padding: 0.95rem;
+}
+
+.calendar-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 0.9rem;
+    font-size: 0.92rem;
+    color: var(--text);
+}
+
+.calendar-nav a {
+    color: var(--muted);
+    text-decoration: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.35rem;
+}
+
+.calendar-weekday,
+.calendar-cell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 32px;
+    border-radius: 10px;
+    font-size: 0.78rem;
+}
+
+.calendar-weekday {
+    color: var(--muted);
+}
+
+.calendar-cell {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
+}
+
+.calendar-muted {
+    opacity: 0.45;
+}
+
+.calendar-has-event {
+    background: rgba(51, 214, 159, 0.16);
+    color: #9af7da;
+    font-weight: 700;
+}
+
+.calendar-today {
+    border: 1px solid var(--accent);
+}
+
 .nav-link:hover {
     color: var(--text);
     background: var(--panel-alt);
@@ -258,6 +332,33 @@ a {
 .btn-danger {
     background: rgba(255, 111, 127, 0.18);
     color: #ffc7cf;
+}
+
+.btn-small {
+    padding: 0.4rem 0.65rem;
+    font-size: 0.82rem;
+}
+
+.room-card,
+.code-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.code-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.settings-grid {
+    display: grid;
+    gap: 1rem;
+    max-width: 720px;
 }
 
 .badge {

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Residents | DormTasker{% endblock %}
+{% block page_title %}Residents{% endblock %}
+
+{% block content %}
+    <section class="card-panel">
+        <div class="panel-head">
+            <h3>Residents</h3>
+            <p>View the team of residents in this room.</p>
+        </div>
+        {% if residents %}
+            <div class="chip-row">
+                {% for resident in residents %}
+                    <article class="task-item task-item-complete">
+                        <div class="task-main">
+                            <h4>{{ resident.name }}</h4>
+                            <p>Resident</p>
+                        </div>
+                        <div class="task-actions">
+                            <a class="btn btn-soft" href="{{ url_for('resident_chores', resident_id=resident.id) }}">View Tasks</a>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="empty-state">No residents found in this room.</p>
+        {% endif %}
+    </section>
+{% endblock %}

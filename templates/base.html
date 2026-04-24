@@ -22,15 +22,20 @@
 
             <nav class="sidebar-nav">
                 {% if current_user %}
-                    <a href="{{ url_for('chores') }}" class="nav-link">Dashboard</a>
+                    <a href="{{ url_for('dashboard') }}" class="nav-link{% if current_path == url_for('dashboard') %} active{% endif %}">Dashboard</a>
                     {% if current_user.role == "RA" %}
-                        <a href="{{ url_for('create_chore') }}" class="nav-link">Create Task</a>
-                        <a href="{{ url_for('chores') }}#assigned" class="nav-link">Assigned Tasks</a>
-                        <a href="{{ url_for('chores') }}#completed" class="nav-link">Completed Tasks</a>
-                        <a href="{{ url_for('chores') }}#residents" class="nav-link">Residents View</a>
+                        <a href="{{ url_for('create_chore') }}" class="nav-link{% if current_path == url_for('create_chore') %} active{% endif %}">Create Task</a>
+                        <a href="{{ url_for('assigned_tasks') }}" class="nav-link{% if current_path == url_for('assigned_tasks') %} active{% endif %}">Assigned Tasks</a>
+                        <a href="{{ url_for('completed_tasks') }}" class="nav-link{% if current_path == url_for('completed_tasks') %} active{% endif %}">Completed Tasks</a>
+                        <a href="{{ url_for('overdue_tasks') }}" class="nav-link{% if current_path == url_for('overdue_tasks') %} active{% endif %}">Overdue Tasks</a>
+                        <a href="{{ url_for('residents') }}" class="nav-link{% if current_path == url_for('residents') %} active{% endif %}">Residents</a>
+                        <a href="{{ url_for('calendar_view') }}" class="nav-link{% if current_path == url_for('calendar_view') %} active{% endif %}">Calendar</a>
+                        <a href="{{ url_for('settings') }}" class="nav-link{% if current_path == url_for('settings') %} active{% endif %}">Settings</a>
                     {% else %}
-                        <a href="{{ url_for('chores') }}#assigned" class="nav-link">My Tasks</a>
-                        <a href="{{ url_for('chores') }}#completed" class="nav-link">Completed</a>
+                        <a href="{{ url_for('assigned_tasks') }}" class="nav-link{% if current_path == url_for('assigned_tasks') %} active{% endif %}">My Tasks</a>
+                        <a href="{{ url_for('completed_tasks') }}" class="nav-link{% if current_path == url_for('completed_tasks') %} active{% endif %}">Completed Tasks</a>
+                        <a href="{{ url_for('calendar_view') }}" class="nav-link{% if current_path == url_for('calendar_view') %} active{% endif %}">Calendar</a>
+                        <a href="{{ url_for('settings') }}" class="nav-link{% if current_path == url_for('settings') %} active{% endif %}">Settings</a>
                     {% endif %}
                     <a href="{{ url_for('logout') }}" class="nav-link">Logout</a>
                 {% else %}
@@ -38,16 +43,35 @@
                     <a href="{{ url_for('register') }}" class="nav-link">Register</a>
                 {% endif %}
             </nav>
+            {% if current_user %}
+                <section class="sidebar-card sidebar-calendar">
+                    <div class="calendar-head">
+                        <span>{{ calendar_label }}</span>
+                        <div class="calendar-nav">
+                            <a href="{{ current_path }}?calendar_month={{ calendar_prev }}">‹</a>
+                            <a href="{{ current_path }}?calendar_month={{ calendar_next }}">›</a>
+                        </div>
+                    </div>
+                    <div class="calendar-grid">
+                        {% for day in calendar_weekdays %}
+                            <span class="calendar-weekday">{{ day }}</span>
+                        {% endfor %}
+                        {% for cell in calendar_cells %}
+                            <span class="calendar-cell{% if cell.month != calendar_month or cell.year != calendar_year %} calendar-muted{% endif %}{% if cell.day in calendar_due_days and cell.month == calendar_month and cell.year == calendar_year %} calendar-has-event{% endif %}{% if cell == calendar_current_date %} calendar-today{% endif %}">{{ cell.day }}</span>
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endif %}
         </aside>
 
         <div class="main-panel">
             <header class="topbar">
                 <div>
                     <p class="topbar-eyebrow">Home</p>
-                    <h2 class="topbar-title">{% block page_title %}Dashboard{% endblock %}</h2>
+                    <h2 class="topbar-title">{% block page_title %}{{ page_title or 'Dashboard' }}{% endblock %}</h2>
                     {% if current_user %}
                         <p class="user-context">
-                            {{ current_user.name }} ({{ current_user.role }}) - {{ current_user.room_name or "No Room" }}
+                            {{ current_user.name }} ({{ current_user_role_text }}) - {{ current_user.room_name or "No Room" }}
                         </p>
                     {% endif %}
                 </div>

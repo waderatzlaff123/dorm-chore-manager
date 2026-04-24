@@ -8,3 +8,7 @@ class InvalidChoreError(ChoreError):
 
 class ChoreNotFoundError(ChoreError):
     """Raised when a chore cannot be found."""
+
+
+class RoomError(ChoreError):
+    """Raised when room settings cannot be updated."""
