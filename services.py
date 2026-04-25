@@ -3,7 +3,7 @@ from functools import wraps
 from typing import Dict, Iterable, List, Optional
 
 from database import get_db_connection
-from exceptions import ChoreNotFoundError, InvalidChoreError
+from exceptions import ChoreError, ChoreNotFoundError, InvalidChoreError
 from models import Chore
 
 
@@ -182,6 +182,11 @@ class ChoreService:
             (title.strip(), description.strip(), clean_due_date, "Pending", room_id, assigned_by),
         )
         chore_id = cursor.lastrowid
+
+        if chore_id is None:
+            conn.close()
+            raise ChoreError("Failed to create chore.")
+        
         if resident_id:
             conn.execute(
                 """
@@ -201,7 +206,7 @@ class ChoreService:
         title: str,
         description: str,
         due_date: str,
-        resident_id: int,
+        resident_id: Optional[int],
         room_id: int = 1,
         assigned_by: int = 1,
     ) -> None:
