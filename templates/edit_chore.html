@@ -17,17 +17,51 @@
         <label for="due_time">Due Time (optional)</label>
         <input type="time" id="due_time" name="due_time" value="{{ chore.due_time }}">
 
-        <label for="resident_ids">Assign Residents</label>
-        <select id="resident_ids" name="resident_ids" multiple size="5" required>
-            <option value="all">All Residents</option>
-            {% for resident in residents %}
-                <option value="{{ resident.id }}" {% if resident.id in chore.resident_ids %}selected{% endif %}>
-                    {{ resident.name }}
-                </option>
-            {% endfor %}
-        </select>
-        <p class="field-note">Hold Ctrl (Cmd on Mac) to choose multiple residents.</p>
+        <label>Assign Residents</label>
+        {% set all_assigned = residents|length > 0 and residents|length == chore.resident_ids|length %}
+        <div class="resident-picker">
+            <label class="checkbox-control checkbox-strong">
+                <input type="checkbox" id="assign_all" name="resident_ids" value="all" {% if all_assigned %}checked{% endif %}>
+                <span>Assign All Residents</span>
+            </label>
+            <div class="resident-list">
+                {% for resident in residents %}
+                    <label class="checkbox-control">
+                        <input type="checkbox" class="resident-checkbox" name="resident_ids" value="{{ resident.id }}" {% if resident.id in chore.resident_ids %}checked{% endif %}>
+                        <span>{{ resident.name }}</span>
+                    </label>
+                {% endfor %}
+            </div>
+        </div>
+        <p class="field-note">Select one or more residents for this task.</p>
 
         <button type="submit">Update Chore</button>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const assignAll = document.getElementById('assign_all');
+                const residents = Array.from(document.querySelectorAll('.resident-checkbox'));
+                const syncAssignAll = () => {
+                    if (!assignAll) return;
+                    assignAll.checked = residents.length > 0 && residents.every((item) => item.checked);
+                };
+                if (assignAll) {
+                    assignAll.addEventListener('change', () => {
+                        residents.forEach((item) => {
+                            item.checked = assignAll.checked;
+                        });
+                    });
+                    residents.forEach((item) => {
+                        item.addEventListener('change', () => {
+                            if (!item.checked) {
+                                assignAll.checked = false;
+                            } else {
+                                syncAssignAll();
+                            }
+                        });
+                    });
+                    syncAssignAll();
+                }
+            });
+        </script>
     </form>
 {% endblock %}

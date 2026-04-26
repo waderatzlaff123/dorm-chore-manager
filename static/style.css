@@ -134,6 +134,279 @@ a {
     font-size: 0.78rem;
 }
 
+.calendar-grid-large {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.75rem;
+    position: relative;
+}
+
+.calendar-day-card {
+    position: relative;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 18px;
+    padding: 1rem;
+    min-height: 110px;
+    overflow: visible;
+    transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.calendar-day-card.calendar-clickable {
+    cursor: pointer;
+}
+
+.calendar-day-card.calendar-clickable:hover {
+    transform: translateY(-1px);
+    border-color: rgba(51, 214, 159, 0.28);
+    background: rgba(51, 214, 159, 0.06);
+}
+
+.calendar-day-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.day-task-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.5rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 999px;
+    background: rgba(51, 214, 159, 0.12);
+    color: #9af7da;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.calendar-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease;
+    z-index: 40;
+}
+
+.calendar-modal-overlay.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.calendar-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.96);
+    width: min(92vw, 640px);
+    max-height: calc(100vh - 5rem);
+    background: rgba(8, 14, 25, 0.98);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 24px;
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.32);
+    padding: 1.25rem;
+    opacity: 0;
+    visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    z-index: 50;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.calendar-modal.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.calendar-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.modal-label {
+    margin: 0 0 0.35rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 1.35rem;
+}
+
+.modal-close {
+    border: none;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text);
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 14px;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.calendar-modal-body {
+    overflow-y: auto;
+    display: grid;
+    gap: 0.85rem;
+    padding-right: 0.15rem;
+}
+
+.calendar-modal-body::-webkit-scrollbar {
+    width: 10px;
+}
+
+.calendar-modal-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+}
+
+.calendar-modal-body::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 999px;
+}
+
+.calendar-task-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    padding: 1rem;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.calendar-task-main h4 {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.task-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.task-meta {
+    display: inline-block;
+}
+
+.task-description {
+    margin: 0;
+    color: var(--text);
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+.modal-empty {
+    margin: 0;
+    color: var(--muted);
+}
+
+.tooltip-item strong {
+    display: block;
+    font-size: 0.95rem;
+    margin-bottom: 0.15rem;
+}
+
+.tooltip-item span {
+    display: block;
+    color: var(--muted);
+    font-size: 0.82rem;
+    line-height: 1.35;
+}
+
+.tooltip-item .badge {
+    margin-top: 0.25rem;
+}
+
+.resident-picker {
+    display: grid;
+    gap: 0.9rem;
+}
+
+.resident-list {
+    display: grid;
+    gap: 0.6rem;
+    padding: 0.8rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.checkbox-control {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.82rem 0.95rem;
+    border-radius: 14px;
+    border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.04);
+    cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.checkbox-control:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.checkbox-control input[type="checkbox"] {
+    appearance: none;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.04);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.checkbox-control input[type="checkbox"]:checked {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.checkbox-control input[type="checkbox"]:checked::after {
+    content: "";
+    width: 0.4rem;
+    height: 0.7rem;
+    border-right: 2px solid #053527;
+    border-bottom: 2px solid #053527;
+    transform: rotate(45deg);
+    position: absolute;
+}
+
+.checkbox-strong {
+    background: rgba(51, 214, 159, 0.12);
+    border-color: rgba(51, 214, 159, 0.18);
+}
+
+.field-note {
+    margin: 0.55rem 0 0;
+    color: var(--muted);
+    font-size: 0.88rem;
+}
+
 .calendar-weekday {
     color: var(--muted);
 }

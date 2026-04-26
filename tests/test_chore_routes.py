@@ -53,6 +53,41 @@ def test_mark_complete_updates_status(isolated_db):
     assert row["status"] == "Completed"
 
 
+def test_resident_completion_tracks_assignment_rows(isolated_db):
+    service = ChoreService()
+    conn = get_db_connection()
+    resident_rows = conn.execute("SELECT id FROM users WHERE role = 'Resident' ORDER BY id LIMIT 2").fetchall()
+    conn.close()
+    resident_ids = [str(row["id"]) for row in resident_rows]
+    assert len(resident_ids) == 2
+
+    chore_id = service.create_chore("Shared task", "Two residents", "2099-12-31", "09:00", resident_ids, 1)
+    first_resident_id = int(resident_ids[0])
+    second_resident_id = int(resident_ids[1])
+
+    service.mark_complete(chore_id, room_id=1, resident_id=first_resident_id)
+
+    conn = get_db_connection()
+    summary = conn.execute(
+        "SELECT status FROM chores WHERE id = ?", (chore_id,)
+    ).fetchone()["status"]
+    assignment_statuses = conn.execute(
+        "SELECT resident_id, status FROM assignments WHERE chore_id = ? ORDER BY resident_id",
+        (chore_id,),
+    ).fetchall()
+    conn.close()
+
+    assert summary == "Partially Completed"
+    assert assignment_statuses[0]["status"] == "Completed"
+    assert assignment_statuses[1]["status"] == "Pending"
+
+    service.mark_complete(chore_id, room_id=1, resident_id=second_resident_id)
+    conn = get_db_connection()
+    summary = conn.execute("SELECT status FROM chores WHERE id = ?", (chore_id,)).fetchone()["status"]
+    conn.close()
+    assert summary == "Completed"
+
+
 def test_delete_chore_removes_from_database(isolated_db):
     service = ChoreService()
     chore_id = service.create_chore("Study area", "Organize chairs", "2099-12-31", "", ["all"], 1)

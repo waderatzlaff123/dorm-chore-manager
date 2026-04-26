@@ -66,6 +66,8 @@ def init_db():
             resident_id INTEGER NOT NULL,
             assigned_by INTEGER NOT NULL,
             room_id INTEGER,
+            status TEXT NOT NULL DEFAULT 'Pending',
+            completed_at TEXT,
             FOREIGN KEY (chore_id) REFERENCES chores (id) ON DELETE CASCADE,
             FOREIGN KEY (resident_id) REFERENCES users (id),
             FOREIGN KEY (assigned_by) REFERENCES users (id),
@@ -74,6 +76,10 @@ def init_db():
     """
     )
 
+    if not _column_exists(conn, "assignments", "status"):
+        conn.execute("ALTER TABLE assignments ADD COLUMN status TEXT DEFAULT 'Pending'")
+    if not _column_exists(conn, "assignments", "completed_at"):
+        conn.execute("ALTER TABLE assignments ADD COLUMN completed_at TEXT")
     if not _column_exists(conn, "chores", "due_time"):
         conn.execute("ALTER TABLE chores ADD COLUMN due_time TEXT")
 
@@ -91,6 +97,13 @@ def init_db():
 
     if not _column_exists(conn, "assignments", "room_id"):
         conn.execute("ALTER TABLE assignments ADD COLUMN room_id INTEGER")
+
+    conn.execute(
+        "UPDATE assignments SET status = 'Completed' WHERE status IS NULL AND chore_id IN (SELECT id FROM chores WHERE status = 'Completed')"
+    )
+    conn.execute(
+        "UPDATE assignments SET status = 'Pending' WHERE status IS NULL"
+    )
 
     room_count = conn.execute("SELECT COUNT(*) AS count FROM rooms").fetchone()["count"]
     if room_count == 0:

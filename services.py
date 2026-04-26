@@ -152,8 +152,17 @@ class ChoreService:
         assigned_names = row["assigned_names"] or ""
         if assigned_names:
             assigned_names = ", ".join({name.strip() for name in assigned_names.split(",") if name.strip()})
+        completed_count = row["completed_assignment_count"] or 0
+        assignment_count = row["assignment_count"] or 0
+        if assignment_count and completed_count == assignment_count:
+            status = "Completed"
+        elif chore.is_overdue() and completed_count < assignment_count:
+            status = "Overdue"
+        elif completed_count > 0 and completed_count < assignment_count:
+            status = "Partially Completed"
+        else:
+            status = "Pending"
         display_due = self._format_due_label(row["due_date"], row["due_time"])
-        status = "Overdue" if chore.is_overdue() else chore.status
         return {
             "id": chore.id,
             "title": chore.title,
@@ -164,6 +173,8 @@ class ChoreService:
             "status": status,
             "assigned_names": assigned_names if assigned_names else None,
             "assigned_resident_ids": [int(i) for i in row["assigned_resident_ids"].split(",") if i] if row["assigned_resident_ids"] else [],
+            "completed_assignment_count": completed_count,
+            "assignment_count": assignment_count,
             "room_id": row["room_id"],
         }
 
@@ -174,7 +185,9 @@ class ChoreService:
                 """
                 SELECT c.id, c.title, c.description, c.due_date, c.due_time, c.status, c.room_id,
                        GROUP_CONCAT(DISTINCT u.name) AS assigned_names,
-                       GROUP_CONCAT(DISTINCT a.resident_id) AS assigned_resident_ids
+                       GROUP_CONCAT(DISTINCT a.resident_id) AS assigned_resident_ids,
+                       SUM(CASE WHEN a.status = 'Completed' THEN 1 ELSE 0 END) AS completed_assignment_count,
+                       COUNT(DISTINCT a.id) AS assignment_count
                 FROM chores c
                 LEFT JOIN assignments a ON c.id = a.chore_id
                 LEFT JOIN users u ON a.resident_id = u.id
@@ -189,7 +202,9 @@ class ChoreService:
                 """
                 SELECT c.id, c.title, c.description, c.due_date, c.due_time, c.status, c.room_id,
                        GROUP_CONCAT(DISTINCT u.name) AS assigned_names,
-                       GROUP_CONCAT(DISTINCT a.resident_id) AS assigned_resident_ids
+                       GROUP_CONCAT(DISTINCT a.resident_id) AS assigned_resident_ids,
+                       SUM(CASE WHEN a.status = 'Completed' THEN 1 ELSE 0 END) AS completed_assignment_count,
+                       COUNT(DISTINCT a.id) AS assignment_count
                 FROM chores c
                 LEFT JOIN assignments a ON c.id = a.chore_id
                 LEFT JOIN users u ON a.resident_id = u.id
@@ -271,12 +286,13 @@ class ChoreService:
             raise ChoreError("Failed to create chore.")
 
         assignment_rows = [
-            (chore_id, resident_id, assigned_by, room_id) for resident_id in sorted(set(resident_ids))
+            (chore_id, resident_id, assigned_by, room_id, 'Pending', None)
+            for resident_id in sorted(set(resident_ids))
         ]
         conn.executemany(
             """
-            INSERT INTO assignments (chore_id, resident_id, assigned_by, room_id)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO assignments (chore_id, resident_id, assigned_by, room_id, status, completed_at)
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
             assignment_rows,
         )
@@ -313,12 +329,13 @@ class ChoreService:
 
         conn.execute("DELETE FROM assignments WHERE chore_id = ?", (chore_id,))
         assignment_rows = [
-            (chore_id, resident_id, assigned_by, room_id) for resident_id in sorted(set(resident_ids))
+            (chore_id, resident_id, assigned_by, room_id, 'Pending', None)
+            for resident_id in sorted(set(resident_ids))
         ]
         conn.executemany(
             """
-            INSERT INTO assignments (chore_id, resident_id, assigned_by, room_id)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO assignments (chore_id, resident_id, assigned_by, room_id, status, completed_at)
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
             assignment_rows,
         )
@@ -333,23 +350,69 @@ class ChoreService:
         conn.commit()
         conn.close()
 
-    def mark_complete(self, chore_id: int, room_id: int = 1) -> None:
-        self.get_chore(chore_id, room_id=room_id)
+    def _refresh_chore_status(self, chore_id: int, room_id: int) -> None:
         conn = get_db_connection()
-        conn.execute(
-            "UPDATE chores SET status = 'Completed' WHERE id = ? AND room_id = ?",
+        row = conn.execute(
+            """
+            SELECT COUNT(*) AS total, SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) AS completed
+            FROM assignments
+            WHERE chore_id = ? AND room_id = ?
+            """,
             (chore_id, room_id),
+        ).fetchone()
+        total = row["total"] or 0
+        completed = row["completed"] or 0
+        if total and completed == total:
+            new_status = "Completed"
+        elif total and completed > 0:
+            new_status = "Partially Completed"
+        else:
+            new_status = "Pending"
+        conn.execute(
+            "UPDATE chores SET status = ? WHERE id = ? AND room_id = ?",
+            (new_status, chore_id, room_id),
         )
         conn.commit()
         conn.close()
+
+    def mark_complete(self, chore_id: int, room_id: int = 1, resident_id: Optional[int] = None) -> None:
+        self.get_chore(chore_id, room_id=room_id)
+        conn = get_db_connection()
+        completed_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        if resident_id is not None:
+            cursor = conn.execute(
+                """
+                UPDATE assignments
+                SET status = 'Completed', completed_at = ?
+                WHERE chore_id = ? AND resident_id = ? AND room_id = ?
+                """,
+                (completed_at, chore_id, resident_id, room_id),
+            )
+            if cursor.rowcount == 0:
+                conn.close()
+                raise ChoreError("You are not assigned to this chore.")
+        else:
+            conn.execute(
+                """
+                UPDATE assignments
+                SET status = 'Completed', completed_at = ?
+                WHERE chore_id = ? AND room_id = ?
+                """,
+                (completed_at, chore_id, room_id),
+            )
+        conn.commit()
+        conn.close()
+        self._refresh_chore_status(chore_id, room_id)
 
     def get_resident_chores(self, resident_id: int, room_id: Optional[int] = None) -> List[Dict]:
         conn = get_db_connection()
         if room_id:
             rows = conn.execute(
                 """
-                SELECT c.id, c.title, c.description, c.due_date, c.due_time, c.status, c.room_id,
-                       GROUP_CONCAT(DISTINCT u.name) AS assigned_names
+                SELECT c.id, c.title, c.description, c.due_date, c.due_time, c.status, c.status AS chore_status, c.room_id,
+                       GROUP_CONCAT(DISTINCT u.name) AS assigned_names,
+                       a.status AS assignment_status,
+                       a.completed_at AS assignment_completed_at
                 FROM chores c
                 JOIN assignments a ON c.id = a.chore_id
                 JOIN users u ON a.resident_id = u.id
@@ -362,8 +425,10 @@ class ChoreService:
         else:
             rows = conn.execute(
                 """
-                SELECT c.id, c.title, c.description, c.due_date, c.due_time, c.status, c.room_id,
-                       GROUP_CONCAT(DISTINCT u.name) AS assigned_names
+                SELECT c.id, c.title, c.description, c.due_date, c.due_time, c.status, c.status AS chore_status, c.room_id,
+                       GROUP_CONCAT(DISTINCT u.name) AS assigned_names,
+                       a.status AS assignment_status,
+                       a.completed_at AS assignment_completed_at
                 FROM chores c
                 JOIN assignments a ON c.id = a.chore_id
                 JOIN users u ON a.resident_id = u.id
@@ -378,6 +443,9 @@ class ChoreService:
         for row in rows:
             chore = self._map_chore(row)
             display_due = self._format_due_label(row["due_date"], row["due_time"])
+            status = row["assignment_status"]
+            if status != "Completed" and chore.is_overdue():
+                status = "Overdue"
             chores.append(
                 {
                     "id": chore.id,
@@ -386,8 +454,9 @@ class ChoreService:
                     "due_date": chore.due_date,
                     "due_time": row["due_time"],
                     "display_due": display_due,
-                    "status": "Overdue" if chore.is_overdue() else chore.status,
+                    "status": status,
                     "assigned_names": row["assigned_names"],
+                    "assignment_completed_at": row["assignment_completed_at"],
                 }
             )
         return chores

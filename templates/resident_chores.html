@@ -26,6 +26,7 @@
                     </p>
                     {% if chore.status != "Completed" %}
                         <form method="post" action="{{ url_for('complete_chore', chore_id=chore.id) }}">
+                            <input type="hidden" name="resident_id" value="{{ resident.id }}">
                             <button type="submit">Mark Complete</button>
                         </form>
                     {% endif %}

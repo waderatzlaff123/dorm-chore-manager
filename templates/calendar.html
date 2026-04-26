@@ -17,18 +17,21 @@
             {% for cell in calendar_cells %}
                 {% set day_key = cell.strftime('%Y-%m-%d') %}
                 {% set day_tasks = chores_by_day.get(day_key, []) %}
-                <div class="calendar-day-card{% if cell.month != calendar_month or cell.year != calendar_year %} calendar-muted{% endif %}{% if cell == calendar_current_date %} calendar-today{% endif %}{% if day_tasks %} calendar-has-event{% endif %}">
+                <div class="calendar-day-card{% if cell.month != calendar_month or cell.year != calendar_year %} calendar-muted{% endif %}{% if cell == calendar_current_date %} calendar-today{% endif %}{% if day_tasks %} calendar-has-event calendar-clickable{% endif %}" data-task-day="{{ day_key }}"{% if day_tasks %} data-has-tasks="true"{% endif %}>
                     <div class="calendar-day-number">{{ cell.day }}</div>
                     {% if day_tasks %}
-                        <div class="day-tooltip">
-                            <p class="tooltip-title">Tasks</p>
+                        <div class="day-task-indicator">
+                            <span>{{ day_tasks|length }} task{% if day_tasks|length > 1 %}s{% endif %}</span>
+                        </div>
+                        <div class="day-task-data" hidden>
                             {% for chore in day_tasks %}
-                                <div class="tooltip-item">
-                                    <strong>{{ chore.title }}</strong>
-                                    <span>{{ chore.assigned_names or 'Assigned' }}</span>
-                                    <span>{{ chore.display_due }}</span>
-                                    <span class="badge badge-{{ chore.status | lower }}">{{ chore.status }}</span>
-                                </div>
+                                <div class="task-detail"
+                                     data-task-title="{{ chore.title | e }}"
+                                     data-task-assigned="{{ chore.assigned_names | default('Unassigned') | e }}"
+                                     data-task-due="{{ chore.display_due | e }}"
+                                     data-task-due-time="{{ chore.due_time or '' | e }}"
+                                     data-task-status="{{ chore.status | e }}"
+                                     data-task-desc="{{ chore.description or '' | e }}"></div>
                             {% endfor %}
                         </div>
                     {% endif %}
@@ -36,8 +39,92 @@
             {% endfor %}
         </div>
 
+        <div class="calendar-modal-overlay" id="calendarModalOverlay"></div>
+        <div class="calendar-modal" id="calendarModal" role="dialog" aria-modal="true" aria-labelledby="calendarModalTitle">
+            <div class="calendar-modal-header">
+                <div>
+                    <p class="modal-label">Tasks Due</p>
+                    <h3 id="calendarModalTitle" class="modal-title">Select a day to view tasks</h3>
+                </div>
+                <button type="button" class="modal-close" id="calendarModalClose">×</button>
+            </div>
+            <div class="calendar-modal-body" id="calendarModalBody">
+                <p class="modal-empty">Click a highlighted date to see task details.</p>
+            </div>
+        </div>
+
         {% if not chores %}
             <p class="empty-state">No tasks are scheduled for this room yet.</p>
         {% endif %}
     </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var modal = document.getElementById('calendarModal');
+            var overlay = document.getElementById('calendarModalOverlay');
+            var closeButton = document.getElementById('calendarModalClose');
+            var modalTitle = document.getElementById('calendarModalTitle');
+            var modalBody = document.getElementById('calendarModalBody');
+
+            function closeModal() {
+                modal.classList.remove('open');
+                overlay.classList.remove('open');
+            }
+
+            function buildTaskCard(task) {
+                var dueTime = task.dueTime ? '<span class="task-meta">Due Time: ' + task.dueTime + '</span>' : '';
+                return '<article class="calendar-task-card">'
+                    + '<div class="calendar-task-main">'
+                    + '<h4>' + task.title + '</h4>'
+                    + '<div class="task-meta-row">'
+                    + '<span>' + task.assigned + '</span>'
+                    + '<span>' + task.due + '</span>'
+                    + dueTime
+                    + '</div>'
+                    + '</div>'
+                    + '<div class="calendar-task-status badge badge-' + task.status.toLowerCase().replace(' ', '-') + '">' + task.status + '</div>'
+                    + (task.description ? '<p class="task-description">' + task.description + '</p>' : '')
+                    + '</article>';
+            }
+
+            function openModal(dayLabel, tasks) {
+                modalTitle.textContent = dayLabel;
+                var content = '';
+                tasks.forEach(function (task) {
+                    content += buildTaskCard(task);
+                });
+                modalBody.innerHTML = content || '<p class="modal-empty">No tasks available for this day.</p>';
+                modal.classList.add('open');
+                overlay.classList.add('open');
+            }
+
+            document.querySelectorAll('.calendar-day-card[data-has-tasks="true"]').forEach(function (dayCard) {
+                dayCard.addEventListener('click', function () {
+                    var dayKey = dayCard.getAttribute('data-task-day');
+                    var tasks = [];
+                    dayCard.querySelectorAll('.task-detail').forEach(function (taskEl) {
+                        tasks.push({
+                            title: taskEl.dataset.taskTitle,
+                            assigned: taskEl.dataset.taskAssigned,
+                            due: taskEl.dataset.taskDue,
+                            dueTime: taskEl.dataset.taskDueTime,
+                            status: taskEl.dataset.taskStatus,
+                            description: taskEl.dataset.taskDesc,
+                        });
+                    });
+                    var dateObj = new Date(dayKey + 'T00:00:00');
+                    var formattedDay = dateObj.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
+                    openModal(formattedDay, tasks);
+                });
+            });
+
+            overlay.addEventListener('click', closeModal);
+            closeButton.addEventListener('click', closeModal);
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') {
+                    closeModal();
+                }
+            });
+        });
+    </script>
 {% endblock %}

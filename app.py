@@ -369,8 +369,18 @@ def delete_chore(chore_id):
 @app.route("/chores/<int:chore_id>/complete", methods=["POST"])
 @login_required
 def complete_chore(chore_id):
+    resident_id = None
+    if g.current_user["role"] != "RA":
+        resident_id = g.current_user["id"]
+    else:
+        resident_value = request.form.get("resident_id")
+        if resident_value:
+            try:
+                resident_id = int(resident_value)
+            except ValueError:
+                resident_id = None
     try:
-        service.mark_complete(chore_id, room_id=g.current_user["room_id"])
+        service.mark_complete(chore_id, room_id=g.current_user["room_id"], resident_id=resident_id)
         flash("Chore marked complete.", "success")
     except ChoreError as error:
         flash(str(error), "error")
