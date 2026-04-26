@@ -1,3 +1,5 @@
+import random
+import string
 from functools import wraps
 
 from flask import flash, redirect, session, url_for
@@ -60,13 +62,23 @@ def authenticate_user(email, password):
     return dict(user)
 
 
+def _generate_unique_room_code(conn, length: int = 6) -> str:
+    alphabet = string.ascii_uppercase + string.digits
+    for _ in range(50):
+        code = "".join(random.choice(alphabet) for _ in range(length))
+        existing = conn.execute("SELECT id FROM rooms WHERE room_code = ?", (code,)).fetchone()
+        if not existing:
+            return code
+    raise AuthError("Unable to generate a unique room code. Please try again.")
+
+
 def register_user(name, email, password, role, room_code):
     clean_name = (name or "").strip()
     clean_email = _normalize_email(email)
     clean_role = (role or "").strip()
     clean_room_code = (room_code or "").strip().upper()
 
-    if not clean_name or not clean_email or not password or not clean_role or not clean_room_code:
+    if not clean_name or not clean_email or not password or not clean_role:
         raise AuthError("All fields are required.")
     if clean_role not in {"RA", "Resident"}:
         raise AuthError("Role must be RA or Resident.")
@@ -77,21 +89,28 @@ def register_user(name, email, password, role, room_code):
         conn.close()
         raise AuthError("That email is already registered.")
 
-    room = conn.execute(
-        "SELECT id, room_name FROM rooms WHERE room_code = ?",
-        (clean_room_code,),
-    ).fetchone()
-    if not room:
-        if clean_role != "RA":
-            conn.close()
-            raise AuthError("Invalid room code for resident signup.")
+    room_id = None
+    room_name = None
+
+    if clean_role == "RA":
+        clean_room_code = _generate_unique_room_code(conn)
+        room_name = f"{clean_name}'s Room"
         cursor = conn.execute(
             "INSERT INTO rooms (room_name, room_code, created_by) VALUES (?, ?, ?)",
-            (f"{clean_name}'s Room", clean_room_code, None),
+            (room_name, clean_room_code, None),
         )
         room_id = cursor.lastrowid
-        room_name = f"{clean_name}'s Room"
     else:
+        if not clean_room_code:
+            conn.close()
+            raise AuthError("Room code is required for resident signup.")
+        room = conn.execute(
+            "SELECT id, room_name FROM rooms WHERE room_code = ?",
+            (clean_room_code,),
+        ).fetchone()
+        if not room:
+            conn.close()
+            raise AuthError("Invalid room code for resident signup.")
         room_id = room["id"]
         room_name = room["room_name"]
 

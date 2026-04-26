@@ -12,17 +12,21 @@
         <textarea id="description" name="description" rows="4">{{ chore.description }}</textarea>
 
         <label for="due_date">Due Date</label>
-        <input type="date" id="due_date" name="due_date" value="{{ chore.due_date }}">
+        <input type="date" id="due_date" name="due_date" value="{{ chore.due_date }}" required>
 
-        <label for="resident_id">Assign to Resident</label>
-        <select id="resident_id" name="resident_id">
-            <option value="">Unassigned</option>
+        <label for="due_time">Due Time (optional)</label>
+        <input type="time" id="due_time" name="due_time" value="{{ chore.due_time }}">
+
+        <label for="resident_ids">Assign Residents</label>
+        <select id="resident_ids" name="resident_ids" multiple size="5" required>
+            <option value="all">All Residents</option>
             {% for resident in residents %}
-                <option value="{{ resident.id }}" {% if chore.resident_id == resident.id %}selected{% endif %}>
+                <option value="{{ resident.id }}" {% if resident.id in chore.resident_ids %}selected{% endif %}>
                     {{ resident.name }}
                 </option>
             {% endfor %}
         </select>
+        <p class="field-note">Hold Ctrl (Cmd on Mac) to choose multiple residents.</p>
 
         <button type="submit">Update Chore</button>
     </form>

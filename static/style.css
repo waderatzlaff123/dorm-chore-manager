@@ -426,6 +426,113 @@ select:focus {
     border-color: rgba(51, 214, 159, 0.65);
 }
 
+.field-note {
+    margin: 0.45rem 0 0;
+    color: var(--muted);
+    font-size: 0.84rem;
+}
+
+.progress-panel {
+    margin-bottom: 1rem;
+}
+
+.progress-summary h3 {
+    margin: 0.6rem 0 0.85rem;
+}
+
+.progress-bar {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    height: 16px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+    border-radius: 999px;
+}
+
+.calendar-grid-large {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.calendar-weekday-large,
+.calendar-day-card {
+    min-height: 100px;
+    border-radius: 16px;
+    padding: 0.85rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--line);
+}
+
+.calendar-weekday-large {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-transform: uppercase;
+}
+
+.calendar-day-card {
+    position: relative;
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.calendar-day-card:hover {
+    transform: translateY(-1px);
+    background: rgba(51, 214, 159, 0.08);
+}
+
+.calendar-day-number {
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+}
+
+.day-tooltip {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 0;
+    padding: 0.85rem;
+    display: none;
+    flex-direction: column;
+    gap: 0.6rem;
+    background: rgba(8, 24, 38, 0.95);
+    border-radius: 16px;
+    color: var(--text);
+    z-index: 2;
+}
+
+.calendar-day-card:hover .day-tooltip {
+    display: flex;
+}
+
+.tooltip-title {
+    margin: 0;
+    color: var(--accent);
+    font-size: 0.9rem;
+}
+
+.tooltip-item {
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding-top: 0.65rem;
+}
+
+.tooltip-item strong {
+    display: block;
+    margin-bottom: 0.3rem;
+}
+
+.tooltip-item span {
+    display: block;
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
 .form-actions {
     display: flex;
     justify-content: flex-end;

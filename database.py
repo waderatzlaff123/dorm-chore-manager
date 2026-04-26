@@ -49,6 +49,7 @@ def init_db():
             title TEXT NOT NULL,
             description TEXT,
             due_date TEXT,
+            due_time TEXT,
             status TEXT NOT NULL DEFAULT 'Pending',
             room_id INTEGER,
             created_by INTEGER,
@@ -72,6 +73,9 @@ def init_db():
         )
     """
     )
+
+    if not _column_exists(conn, "chores", "due_time"):
+        conn.execute("ALTER TABLE chores ADD COLUMN due_time TEXT")
 
     if not _column_exists(conn, "users", "email"):
         conn.execute("ALTER TABLE users ADD COLUMN email TEXT")

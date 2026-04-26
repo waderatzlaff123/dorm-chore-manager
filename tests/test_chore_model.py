@@ -10,7 +10,7 @@ from services import ChoreService
 def test_invalid_chore_title_raises_error():
     service = ChoreService()
     with pytest.raises(InvalidChoreError):
-        service.create_chore("", "desc", "", None, 1)
+        service.create_chore("", "desc", "2099-12-31", "", ["1"], 1)
 
 
 def test_mark_complete_changes_status():

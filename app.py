@@ -54,6 +54,15 @@ def _calendar_context(chore_list):
     }
 
 
+def _group_chores_by_date(chores):
+    grouped = {}
+    for chore in chores:
+        due_date = chore.get("due_date")
+        if due_date:
+            grouped.setdefault(due_date, []).append(chore)
+    return grouped
+
+
 @app.before_request
 def load_current_user():
     user_id = session.get("user_id")
@@ -81,17 +90,32 @@ def inject_current_user():
 
 def _fetch_dashboard_context():
     room_id = g.current_user["room_id"]
+    user_role = g.current_user["role"]
     residents = service.get_residents(room_id=room_id)
-    if g.current_user["role"] == "RA":
+    if user_role == "RA":
         all_chores = service.get_chores(room_id=room_id)
     else:
         all_chores = service.get_resident_chores(g.current_user["id"], room_id=room_id)
+    completed_count = sum(1 for chore in all_chores if chore.get("status") == "Completed")
     overdue_count = sum(1 for _ in service.overdue_chores(all_chores))
+    progress = {}
+    if user_role != "RA":
+        total_tasks = len(all_chores)
+        progress_count = completed_count
+        progress_percentage = int((progress_count / total_tasks) * 100) if total_tasks else 0
+        progress = {
+            "progress_count": progress_count,
+            "total_tasks": total_tasks,
+            "progress_percentage": progress_percentage,
+        }
     return {
         "room_id": room_id,
         "residents": residents,
         "all_chores": all_chores,
         "overdue_count": overdue_count,
+        "completed_count": completed_count,
+        "user_role": user_role,
+        **progress,
     }
 
 
@@ -134,6 +158,8 @@ def register():
             )
             session["user_id"] = user["id"]
             flash("Account created. You are now connected to your room.", "success")
+            if user["role"] == "RA":
+                flash(f"Your room code is {user['room_code']}. Share it with residents.", "success")
             return redirect(url_for("dashboard"))
         except AuthError as error:
             flash(str(error), "error")
@@ -147,7 +173,7 @@ def dashboard():
     section = "assigned"
     return render_template(
         "dashboard.html",
-        page_title="Dashboard",
+        page_title="To Do",
         section=section,
         **context,
     )
@@ -158,9 +184,10 @@ def dashboard():
 def assigned_tasks():
     context = _fetch_dashboard_context()
     section = "assigned"
+    page_title = "Assign Tasks" if g.current_user["role"] == "RA" else "To Do"
     return render_template(
         "dashboard.html",
-        page_title="Assigned Tasks",
+        page_title=page_title,
         section=section,
         **context,
     )
@@ -215,10 +242,12 @@ def calendar_view():
         chore_list = service.get_chores(room_id=room_id)
     else:
         chore_list = service.get_resident_chores(g.current_user["id"], room_id=room_id)
+    chores_by_day = _group_chores_by_date(chore_list)
     return render_template(
         "calendar.html",
         page_title="Calendar",
         chores=chore_list,
+        chores_by_day=chores_by_day,
         **context,
     )
 
@@ -272,12 +301,13 @@ def create_chore():
     residents = service.get_residents(room_id=g.current_user["room_id"])
     if request.method == "POST":
         try:
-            resident_id = request.form.get("resident_id")
+            resident_values = request.form.getlist("resident_ids")
             service.create_chore(
                 title=request.form.get("title", ""),
                 description=request.form.get("description", ""),
                 due_date=request.form.get("due_date", ""),
-                resident_id=int(resident_id) if resident_id else None,
+                due_time=request.form.get("due_time", ""),
+                resident_values=resident_values,
                 assigned_by=g.current_user["id"],
                 room_id=g.current_user["room_id"],
             )
@@ -304,13 +334,14 @@ def edit_chore(chore_id):
 
     if request.method == "POST":
         try:
-            resident_id = request.form.get("resident_id")
+            resident_values = request.form.getlist("resident_ids")
             service.update_chore(
                 chore_id=chore_id,
                 title=request.form.get("title", ""),
                 description=request.form.get("description", ""),
                 due_date=request.form.get("due_date", ""),
-                resident_id=int(resident_id) if resident_id else None,
+                due_time=request.form.get("due_time", ""),
+                resident_values=resident_values,
                 room_id=g.current_user["room_id"],
                 assigned_by=g.current_user["id"],
             )

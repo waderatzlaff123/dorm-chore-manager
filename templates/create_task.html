@@ -24,18 +24,24 @@
             <div class="field-row">
                 <div class="field">
                     <label for="due_date">Due Date</label>
-                    <input type="date" id="due_date" name="due_date">
+                    <input type="date" id="due_date" name="due_date" required>
                 </div>
 
                 <div class="field">
-                    <label for="resident_id">Assign Resident</label>
-                    <select id="resident_id" name="resident_id">
-                        <option value="">Unassigned</option>
-                        {% for resident in residents %}
-                            <option value="{{ resident.id }}">{{ resident.name }}</option>
-                        {% endfor %}
-                    </select>
+                    <label for="due_time">Due Time (optional)</label>
+                    <input type="time" id="due_time" name="due_time">
                 </div>
+            </div>
+
+            <div class="field">
+                <label for="resident_ids">Assign Residents</label>
+                <select id="resident_ids" name="resident_ids" multiple size="5" required>
+                    <option value="all">All Residents</option>
+                    {% for resident in residents %}
+                        <option value="{{ resident.id }}">{{ resident.name }}</option>
+                    {% endfor %}
+                </select>
+                <p class="field-note">Hold Ctrl (Cmd on Mac) to choose multiple residents.</p>
             </div>
 
             <div class="form-actions">

@@ -82,6 +82,12 @@ def test_room_code_connection(auth_client):
         },
         follow_redirects=True,
     )
+    conn = get_db_connection()
+    room_code = conn.execute(
+        "SELECT room_code FROM rooms WHERE id = (SELECT room_id FROM users WHERE email = ?)",
+        ("jordan@school.edu",),
+    ).fetchone()["room_code"]
+    conn.close()
     auth_client.get("/logout")
     auth_client.post(
         "/register",
@@ -90,7 +96,7 @@ def test_room_code_connection(auth_client):
             "email": "sam@school.edu",
             "password": "pass12345",
             "role": "Resident",
-            "room_code": "ROOM777",
+            "room_code": room_code,
         },
         follow_redirects=True,
     )
@@ -121,10 +127,17 @@ def test_ra_can_view_room_code_on_settings(auth_client):
         follow_redirects=True,
     )
 
+    conn = get_db_connection()
+    room_code = conn.execute(
+        "SELECT room_code FROM rooms WHERE id = (SELECT room_id FROM users WHERE email = ?)",
+        ("jordan@school.edu",),
+    ).fetchone()["room_code"]
+    conn.close()
+
     response = auth_client.get("/settings")
     assert response.status_code == 200
     assert b"Room Code" in response.data
-    assert b"ROOM777" in response.data
+    assert room_code.encode() in response.data
 
 
 def test_ra_can_update_room_name(auth_client):
@@ -163,6 +176,12 @@ def test_resident_cannot_update_room_name(auth_client):
         },
         follow_redirects=True,
     )
+    conn = get_db_connection()
+    room_code = conn.execute(
+        "SELECT room_code FROM rooms WHERE id = (SELECT room_id FROM users WHERE email = ?)",
+        ("morgan@school.edu",),
+    ).fetchone()["room_code"]
+    conn.close()
     auth_client.get("/logout")
     auth_client.post(
         "/register",
@@ -171,7 +190,7 @@ def test_resident_cannot_update_room_name(auth_client):
             "email": "sam@school.edu",
             "password": "roomprotect1",
             "role": "Resident",
-            "room_code": "ROOM999",
+            "room_code": room_code,
         },
         follow_redirects=True,
     )
@@ -202,12 +221,36 @@ def test_completed_tasks_page_only_shows_completed(auth_client):
 
     conn = get_db_connection()
     user = conn.execute("SELECT id, room_id FROM users WHERE email = ?", ("avery@school.edu",)).fetchone()
+    room_code = conn.execute("SELECT room_code FROM rooms WHERE id = ?", (user["room_id"],)).fetchone()["room_code"]
     conn.close()
+
+    auth_client.get("/logout", follow_redirects=True)
+    auth_client.post(
+        "/register",
+        data={
+            "name": "Resident One",
+            "email": "residentone@school.edu",
+            "password": "residentpass",
+            "role": "Resident",
+            "room_code": room_code,
+        },
+        follow_redirects=True,
+    )
+    conn = get_db_connection()
+    resident_id = conn.execute("SELECT id FROM users WHERE email = ?", ("residentone@school.edu",)).fetchone()["id"]
+    conn.close()
+    auth_client.get("/logout", follow_redirects=True)
+
     service = ChoreService()
-    first = service.create_chore("Done Task", "Finish this", "", None, user["id"], room_id=user["room_id"])
-    second = service.create_chore("Pending Task", "Keep working", "", None, user["id"], room_id=user["room_id"])
+    first = service.create_chore("Done Task", "Finish this", "2099-12-31", "", [str(resident_id)], user["id"], room_id=user["room_id"])
+    second = service.create_chore("Pending Task", "Keep working", "2099-12-31", "", [str(resident_id)], user["id"], room_id=user["room_id"])
     service.mark_complete(first, room_id=user["room_id"])
 
+    auth_client.post(
+        "/login",
+        data={"email": "avery@school.edu", "password": "donepass1"},
+        follow_redirects=True,
+    )
     response = auth_client.get("/tasks/completed")
     assert response.status_code == 200
     assert b"Done Task" in response.data
@@ -229,14 +272,37 @@ def test_navigation_routes_filter_tasks(auth_client):
 
     conn = get_db_connection()
     user = conn.execute("SELECT id, room_id FROM users WHERE email = ?", ("casey2@school.edu",)).fetchone()
+    room_code = conn.execute("SELECT room_code FROM rooms WHERE id = ?", (user["room_id"],)).fetchone()["room_code"]
     conn.close()
+    auth_client.get("/logout", follow_redirects=True)
+    auth_client.post(
+        "/register",
+        data={
+            "name": "Panel Resident",
+            "email": "panelresident@school.edu",
+            "password": "resident123",
+            "role": "Resident",
+            "room_code": room_code,
+        },
+        follow_redirects=True,
+    )
+    conn = get_db_connection()
+    resident_id = conn.execute("SELECT id FROM users WHERE email = ?", ("panelresident@school.edu",)).fetchone()["id"]
+    conn.close()
+    auth_client.get("/logout", follow_redirects=True)
+
     service = ChoreService()
     overdue_date = (date.today() - timedelta(days=2)).strftime("%Y-%m-%d")
-    service.create_chore("Overdue Task", "Late chore", overdue_date, None, user["id"], room_id=user["room_id"])
-    pending_id = service.create_chore("Open Task", "Work in progress", "", None, user["id"], room_id=user["room_id"])
-    completed_id = service.create_chore("Closed Task", "Already done", "", None, user["id"], room_id=user["room_id"])
+    service.create_chore("Overdue Task", "Late chore", overdue_date, "", [str(resident_id)], user["id"], room_id=user["room_id"])
+    pending_id = service.create_chore("Open Task", "Work in progress", "2099-12-31", "", [str(resident_id)], user["id"], room_id=user["room_id"])
+    completed_id = service.create_chore("Closed Task", "Already done", "2099-12-31", "", [str(resident_id)], user["id"], room_id=user["room_id"])
     service.mark_complete(completed_id, room_id=user["room_id"])
 
+    auth_client.post(
+        "/login",
+        data={"email": "casey2@school.edu", "password": "navpass123"},
+        follow_redirects=True,
+    )
     assigned = auth_client.get("/tasks/assigned")
     assert b"Open Task" in assigned.data
     assert b"Overdue Task" in assigned.data
@@ -255,3 +321,81 @@ def test_protected_route_redirects_unauthenticated(auth_client):
     response = auth_client.get("/chores")
     assert response.status_code == 302
     assert "/login" in response.headers["Location"]
+
+
+def test_generated_room_code_is_six_characters(auth_client):
+    response = auth_client.post(
+        "/register",
+        data={
+            "name": "Cameron RA",
+            "email": "cameron@school.edu",
+            "password": "roomcode123",
+            "role": "RA",
+            "room_code": "SHOULDIGNORE",
+        },
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    conn = get_db_connection()
+    room = conn.execute(
+        "SELECT room_code FROM rooms ORDER BY id DESC LIMIT 1"
+    ).fetchone()
+    conn.close()
+    assert room is not None
+    assert len(room["room_code"]) == 6
+    assert room["room_code"].isalnum()
+
+
+def test_generated_room_code_is_unique(auth_client):
+    auth_client.post(
+        "/register",
+        data={
+            "name": "Phoenix RA",
+            "email": "phoenix@school.edu",
+            "password": "unique123",
+            "role": "RA",
+            "room_code": "IGNORED1",
+        },
+        follow_redirects=True,
+    )
+    auth_client.get("/logout", follow_redirects=True)
+    auth_client.post(
+        "/register",
+        data={
+            "name": "Dakota RA",
+            "email": "dakota@school.edu",
+            "password": "unique123",
+            "role": "RA",
+            "room_code": "IGNORED2",
+        },
+        follow_redirects=True,
+    )
+    conn = get_db_connection()
+    rows = conn.execute("SELECT room_code FROM rooms ORDER BY id DESC LIMIT 2").fetchall()
+    conn.close()
+    assert len(rows) == 2
+    assert rows[0]["room_code"] != rows[1]["room_code"]
+
+
+def test_ra_registration_ignores_manual_room_code(auth_client):
+    response = auth_client.post(
+        "/register",
+        data={
+            "name": "River RA",
+            "email": "river@school.edu",
+            "password": "roompass1",
+            "role": "RA",
+            "room_code": "MANUAL99",
+        },
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    conn = get_db_connection()
+    row = conn.execute(
+        "SELECT room_code FROM rooms WHERE id = (SELECT room_id FROM users WHERE email = ?)",
+        ("river@school.edu",),
+    ).fetchone()
+    conn.close()
+    assert row is not None
+    assert row["room_code"] != "MANUAL99"
+    assert len(row["room_code"]) == 6

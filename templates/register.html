@@ -39,7 +39,8 @@
 
                 <div class="field">
                     <label for="room_code">Room Code</label>
-                    <input type="text" id="room_code" name="room_code" required placeholder="Example: OAK-214">
+                    <input type="text" id="room_code" name="room_code" required placeholder="Enter your room code">
+                    <p class="field-note" id="room-code-note">Enter the code provided by your Resident's Assistant.</p>
                 </div>
 
                 <button class="btn btn-primary" type="submit">Create Account</button>
@@ -50,4 +51,27 @@
             </p>
         </article>
     </section>
+    <script>
+        const roleSelect = document.getElementById("role");
+        const roomCodeInput = document.getElementById("room_code");
+        const roomCodeNote = document.getElementById("room-code-note");
+
+        function updateRoomCodeField() {
+            if (roleSelect.value === "RA") {
+                roomCodeInput.value = "";
+                roomCodeInput.placeholder = "Generated automatically";
+                roomCodeInput.required = false;
+                roomCodeInput.readOnly = true;
+                roomCodeNote.textContent = "Resident's Assistants will get a generated room code after signup.";
+            } else {
+                roomCodeInput.placeholder = "Enter your room code";
+                roomCodeInput.required = true;
+                roomCodeInput.readOnly = false;
+                roomCodeNote.textContent = "Enter the code provided by your Resident's Assistant.";
+            }
+        }
+
+        roleSelect.addEventListener("change", updateRoomCodeField);
+        updateRoomCodeField();
+    </script>
 {% endblock %}

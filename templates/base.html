@@ -22,17 +22,16 @@
 
             <nav class="sidebar-nav">
                 {% if current_user %}
-                    <a href="{{ url_for('dashboard') }}" class="nav-link{% if current_path == url_for('dashboard') %} active{% endif %}">Dashboard</a>
+                    <a href="{{ url_for('dashboard') }}" class="nav-link{% if current_path == url_for('dashboard') %} active{% endif %}">To Do</a>
                     {% if current_user.role == "RA" %}
-                        <a href="{{ url_for('create_chore') }}" class="nav-link{% if current_path == url_for('create_chore') %} active{% endif %}">Create Task</a>
-                        <a href="{{ url_for('assigned_tasks') }}" class="nav-link{% if current_path == url_for('assigned_tasks') %} active{% endif %}">Assigned Tasks</a>
+                        <a href="{{ url_for('create_chore') }}" class="nav-link{% if current_path == url_for('create_chore') %} active{% endif %}">Create Tasks</a>
+                        <a href="{{ url_for('assigned_tasks') }}" class="nav-link{% if current_path == url_for('assigned_tasks') %} active{% endif %}">Assign Tasks</a>
                         <a href="{{ url_for('completed_tasks') }}" class="nav-link{% if current_path == url_for('completed_tasks') %} active{% endif %}">Completed Tasks</a>
                         <a href="{{ url_for('overdue_tasks') }}" class="nav-link{% if current_path == url_for('overdue_tasks') %} active{% endif %}">Overdue Tasks</a>
-                        <a href="{{ url_for('residents') }}" class="nav-link{% if current_path == url_for('residents') %} active{% endif %}">Residents</a>
                         <a href="{{ url_for('calendar_view') }}" class="nav-link{% if current_path == url_for('calendar_view') %} active{% endif %}">Calendar</a>
+                        <a href="{{ url_for('residents') }}" class="nav-link{% if current_path == url_for('residents') %} active{% endif %}">Residents</a>
                         <a href="{{ url_for('settings') }}" class="nav-link{% if current_path == url_for('settings') %} active{% endif %}">Settings</a>
                     {% else %}
-                        <a href="{{ url_for('assigned_tasks') }}" class="nav-link{% if current_path == url_for('assigned_tasks') %} active{% endif %}">My Tasks</a>
                         <a href="{{ url_for('completed_tasks') }}" class="nav-link{% if current_path == url_for('completed_tasks') %} active{% endif %}">Completed Tasks</a>
                         <a href="{{ url_for('calendar_view') }}" class="nav-link{% if current_path == url_for('calendar_view') %} active{% endif %}">Calendar</a>
                         <a href="{{ url_for('settings') }}" class="nav-link{% if current_path == url_for('settings') %} active{% endif %}">Settings</a>

@@ -19,6 +19,21 @@
         </article>
     </section>
 
+    {% if user_role != 'RA' %}
+        <section class="card-panel progress-panel">
+            <div class="progress-summary">
+                <p class="stat-label">Resident Progress</p>
+                <h3>{{ progress_count }} of {{ total_tasks }} chores completed</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ progress_percentage }}%"></div>
+                </div>
+            </div>
+            {% if total_tasks == 0 %}
+                <p class="empty-state">No chores assigned yet. Check back once your Resident's Assistant adds tasks.</p>
+            {% endif %}
+        </section>
+    {% endif %}
+
     {% if section == 'assigned' %}
         <section class="card-panel">
             <div class="panel-head">
@@ -34,8 +49,8 @@
                                 <h4>{{ chore.title }}</h4>
                                 <p>{{ chore.description or 'No details provided.' }}</p>
                                 <div class="meta-row">
-                                    <span>Assigned: {{ chore.resident_name or 'Unassigned' }}</span>
-                                    <span>Due: {{ chore.due_date or 'No due date' }}</span>
+                                    <span>Assigned to: {{ chore.assigned_names or 'Unassigned' }}</span>
+                                    <span>{{ chore.display_due }}</span>
                                     <span class="badge badge-{{ chore.status | lower }}">{{ chore.status }}</span>
                                 </div>
                             </div>
@@ -73,8 +88,8 @@
                             <div class="task-main">
                                 <h4>{{ chore.title }}</h4>
                                 <div class="meta-row">
-                                    <span>Assigned: {{ chore.resident_name or 'Unassigned' }}</span>
-                                    <span>Done</span>
+                                    <span>Assigned to: {{ chore.assigned_names or 'Unassigned' }}</span>
+                                    <span>{{ chore.display_due }}</span>
                                     <span class="badge badge-completed">Completed</span>
                                 </div>
                             </div>
@@ -100,8 +115,8 @@
                                 <h4>{{ chore.title }}</h4>
                                 <p>{{ chore.description or 'No details provided.' }}</p>
                                 <div class="meta-row">
-                                    <span>Assigned: {{ chore.resident_name or 'Unassigned' }}</span>
-                                    <span>Due: {{ chore.due_date or 'No due date' }}</span>
+                                    <span>Assigned to: {{ chore.assigned_names or 'Unassigned' }}</span>
+                                    <span>{{ chore.display_due }}</span>
                                     <span class="badge badge-overdue">Overdue</span>
                                 </div>
                             </div>

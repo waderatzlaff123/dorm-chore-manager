@@ -18,7 +18,8 @@
                 <article class="chore-card">
                     <h3>{{ chore.title }}</h3>
                     <p>{{ chore.description or 'No description provided.' }}</p>
-                    <p><strong>Due:</strong> {{ chore.due_date or 'No due date' }}</p>
+                    <p><strong>{{ chore.display_due }}</strong></p>
+                    <p><strong>Assigned to:</strong> {{ chore.assigned_names or 'Unknown' }}</p>
                     <p>
                         <strong>Status:</strong>
                         <span class="badge badge-{{ chore.status|lower }}">{{ chore.status }}</span>

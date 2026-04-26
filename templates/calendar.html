@@ -7,26 +7,37 @@
     <section class="card-panel">
         <div class="panel-head">
             <h3>Chore Calendar</h3>
-            <p>See due dates for the current month on the room calendar.</p>
+            <p>View the full month layout and hover for task details.</p>
         </div>
-        {% set scheduled = chores | selectattr('due_date') | list | sort(attribute='due_date') %}
-        {% if scheduled %}
-            <div class="task-list">
-                {% for chore in scheduled %}
-                    <article class="task-item task-item-complete">
-                        <div class="task-main">
-                            <h4>{{ chore.title }}</h4>
-                            <p>{{ chore.description or 'No additional details.' }}</p>
-                            <div class="meta-row">
-                                <span>Due: {{ chore.due_date }}</span>
-                                <span>Status: {{ chore.status }}</span>
-                            </div>
+
+        <div class="calendar-grid-large">
+            {% for day in calendar_weekdays %}
+                <div class="calendar-weekday-large">{{ day }}</div>
+            {% endfor %}
+            {% for cell in calendar_cells %}
+                {% set day_key = cell.strftime('%Y-%m-%d') %}
+                {% set day_tasks = chores_by_day.get(day_key, []) %}
+                <div class="calendar-day-card{% if cell.month != calendar_month or cell.year != calendar_year %} calendar-muted{% endif %}{% if cell == calendar_current_date %} calendar-today{% endif %}{% if day_tasks %} calendar-has-event{% endif %}">
+                    <div class="calendar-day-number">{{ cell.day }}</div>
+                    {% if day_tasks %}
+                        <div class="day-tooltip">
+                            <p class="tooltip-title">Tasks</p>
+                            {% for chore in day_tasks %}
+                                <div class="tooltip-item">
+                                    <strong>{{ chore.title }}</strong>
+                                    <span>{{ chore.assigned_names or 'Assigned' }}</span>
+                                    <span>{{ chore.display_due }}</span>
+                                    <span class="badge badge-{{ chore.status | lower }}">{{ chore.status }}</span>
+                                </div>
+                            {% endfor %}
                         </div>
-                    </article>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="empty-state">No calendar items found for this room.</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if not chores %}
+            <p class="empty-state">No tasks are scheduled for this room yet.</p>
         {% endif %}
     </section>
 {% endblock %}
