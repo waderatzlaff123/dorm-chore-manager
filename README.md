@@ -33,10 +33,13 @@ Dorm chores are often tracked informally, which causes missed deadlines and uncl
    - `pip install -r requirements.txt`
 
 ## Run the App
-
+Locally- 
 `python app.py`
 
 Then open: `http://127.0.0.1:5000/chores`
+
+From Deployment via Render:
+Use URL: https://dormtasker.onrender.com
 
 ## Run Tests
 

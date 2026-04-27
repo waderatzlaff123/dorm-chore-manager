@@ -1,5 +1,6 @@
 from calendar import Calendar
 from datetime import date, datetime, timedelta
+import os
 
 from flask import Flask, flash, g, redirect, render_template, request, session, url_for
 
@@ -9,7 +10,7 @@ from exceptions import ChoreError, RoomError
 from services import ChoreService
 
 app = Flask(__name__)
-app.secret_key = "dev-secret-key"
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret-key")
 service = ChoreService()
 
 init_db()
